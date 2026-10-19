@@ -59,7 +59,7 @@
   "verbose": true,
 
   // Enable crew memory — persists context and learnings across tasks
-  "memory": true,
+  "memory": false,
 
   // Automatically plan the execution strategy before running tasks
   // "planning": false,
