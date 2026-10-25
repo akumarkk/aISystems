@@ -14,4 +14,6 @@ Add-Content .gitignore ".venv"
    uv add 'crewai[litellm]'
    uv add "crewai[tools]" --upgrade; uv add litellm --upgrade
 
+   pip install -U litellm crewai
+
 ```
