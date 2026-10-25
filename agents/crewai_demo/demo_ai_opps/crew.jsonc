@@ -59,7 +59,10 @@
   "verbose": true,
 
   // Enable crew memory — persists context and learnings across tasks
-  "memory": true,
+  "memory": false,
+
+  // Strips CrewAI's internal cache_breakpoint flag that Mistral (via LiteLLM) rejects
+  "before_kickoff_callbacks": [{"python": "tools.litellm_fixes.strip_cache_breakpoint"}],
 
   // Automatically plan the execution strategy before running tasks
   // "planning": false,
