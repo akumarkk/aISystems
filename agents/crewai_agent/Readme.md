@@ -25,9 +25,13 @@ py -3.12 -m venv .venv
 # 4. Upgrade pip and install dependencies
 python -m pip install --upgrade pip
 python -m pip install crewai
+python -m pip install -q "crewai[litellm]==1.1.0"
 
 # 5. Set your Mistral API key
 $env\:MISTRAL_API_KEY = "your-key-here"   # current session only
+
+
+python -c "from crewai import LLM; print(LLM(model='mistral/mistral-large-latest').call('Say hi in 3 words'))"
 
 # 6. Run
 python app.py

@@ -1,4 +1,10 @@
 from crewai import Agent, Task, Crew, Process
+from crewai import LLM
+
+mistral_llm = LLM(
+    model="mistral/mistral-large-latest",
+    temperature=0.7,
+)
 
 agent = Agent(
     role="Senior Research Analyst",
@@ -7,6 +13,7 @@ agent = Agent(
         "You are a veteran analyst known for sharp, concise insight "
         "into emerging technology trends."
     ),
+    llm=mistral_llm,
     verbose=True,
 )
 
