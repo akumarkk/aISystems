@@ -3,3 +3,8 @@ __pycache__/
 .DS_Store
 report.md
 .crewai/
+.venv/
+.venv/
+__pycache__/
+*.pyc
+.env
