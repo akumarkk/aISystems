@@ -1,0 +1,21 @@
+[project]
+name = "demo_ai_opps"
+version = "0.1.0"
+description = "demo_ai_opps using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=1.15.23,<2.0.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["agents", "crew.jsonc", "tools", "knowledge", "skills"]
+
+[tool.crewai]
+type = "crew"
+definition = "crew.jsonc"
+project_id = "32e68b34-9e46-4aaa-b1eb-86d1664396ba"
