@@ -13,12 +13,17 @@ merged over crew.jsonc "inputs".
 
 import json
 import os
+import tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from crewai.project.crew_loader import load_crew_and_kickoff
 
-CREW_PATH = Path(__file__).parent / "crew.jsonc"
+ROOT = Path(__file__).parent
+CREW_PATH = ROOT / "crew.jsonc"
+
+# Single source of truth: [project].version in pyproject.toml
+VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
 
 # Placeholders used in crew.jsonc / agents/*.jsonc
 REQUIRED_INPUTS = ("origin", "travel_dates", "travelers", "budget", "interests")
@@ -35,7 +40,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/ping":
-            self._send(200, {"status": "Healthy"})
+            self._send(200, {"status": "Healthy", "version": VERSION})
         else:
             self._send(404, {"error": "not found"})
 
@@ -59,5 +64,5 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
-    print(f"vac_planner listening on :{port}", flush=True)
+    print(f"vac_planner {VERSION} listening on :{port}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
