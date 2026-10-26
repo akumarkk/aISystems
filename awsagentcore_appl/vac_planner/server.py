@@ -62,7 +62,18 @@ class Handler(BaseHTTPRequestHandler):
             self._send(500, {"error": str(exc)})
 
 
+def load_secrets() -> None:
+    """On AWS, pull MISTRAL_API_KEY from Secrets Manager instead of a plain env var."""
+    secret_id = os.environ.get("MISTRAL_SECRET_ID")
+    if secret_id and not os.environ.get("MISTRAL_API_KEY"):
+        import boto3
+
+        client = boto3.client("secretsmanager")
+        os.environ["MISTRAL_API_KEY"] = client.get_secret_value(SecretId=secret_id)["SecretString"]
+
+
 if __name__ == "__main__":
+    load_secrets()
     port = int(os.environ.get("PORT", "8080"))
     print(f"vac_planner {VERSION} listening on :{port}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
