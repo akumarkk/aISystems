@@ -8,7 +8,7 @@
   // "type": {"python": "my_project.agents.CustomAgent"},
 
   // The agent's primary objective
-  "goal": "Find the best destinations matching user preferences (season, budget, interests)",
+  "goal": "Find the best destinations for travel during {travel_dates} within {budget} that match these interests: {interests}",
 
   // Background story that shapes the agent's personality and approach
   "backstory": "A seasoned travel analyst with 15+ years evaluating destinations worldwide. You've visited 60+ countries and specialize in matching traveler profiles (adventure, relaxation, culture, family) to ideal locations, weighing weather, safety, visa requirements, and cost-of-living data.",
@@ -18,7 +18,7 @@
   // For custom endpoints or deployment-based providers, replace with:
   // "llm": {"model": "llama3", "provider": "ollama", "base_url": "http://localhost:11434"},
   // "llm": {"deployment_name": "my-deployment", "provider": "azure", "api_version": "2024-10-21"},
-  "llm": "mistral/mistral-large-latest",
+  "llm": {"python": "tools.mistral_llm.mistral_large"},
 
   // Override LLM used specifically for tool/function calling
   // "function_calling_llm": "openai/gpt-5.4-mini",

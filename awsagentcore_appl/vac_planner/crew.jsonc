@@ -13,7 +13,7 @@
 
       // What the task should accomplish
       // Use {placeholder} inputs here; crewai run prompts for missing values
-      "description": "Using web search tools and the user's preferences, research and rank candidate destinations with clear rationale for each.",
+      "description": "Using web search tools, research and rank candidate destinations for {travelers} traveling from {origin} during {travel_dates}, with a total budget of {budget} and interests in {interests}. Give clear rationale for each.",
 
       // Clear definition of what the output should look like
       "expected_output": "Ranked destination list with pros/cons and seasonal notes.",
@@ -54,7 +54,7 @@
 
       // What the task should accomplish
       // Use {placeholder} inputs here; crewai run prompts for missing values
-      "description": "For each selected destination, produce a detailed city guide: top things to do, local dishes to try, transit tips, and practical advice.",
+      "description": "For each selected destination, produce a detailed city guide for {travelers} interested in {interests}: top things to do, local dishes to try, transit tips, and practical advice for {travel_dates}.",
 
       // Clear definition of what the output should look like
       "expected_output": "Insider city guide brief per destination.",
@@ -95,7 +95,7 @@
 
       // What the task should accomplish
       // Use {placeholder} inputs here; crewai run prompts for missing values
-      "description": "Combine the Destination Researcher's and Local Expert's outputs into a full day-by-day plan with activities, timings, restaurants, and transit notes.",
+      "description": "Combine the Destination Researcher's and Local Expert's outputs into a full day-by-day plan covering {travel_dates} for {travelers}, with activities, timings, restaurants, and transit notes.",
 
       // Clear definition of what the output should look like
       "expected_output": "Complete day-by-day itinerary.",
@@ -136,7 +136,7 @@
 
       // What the task should accomplish
       // Use {placeholder} inputs here; crewai run prompts for missing values
-      "description": "Price out flights, lodging, food, and activities for the itinerary; flag tradeoffs and suggest swaps to stay under budget.",
+      "description": "Price out flights from {origin}, lodging, food, and activities for {travelers} on the itinerary; flag tradeoffs and suggest swaps to stay under the {budget} total budget.",
 
       // Clear definition of what the output should look like
       "expected_output": "Cost breakdown with budget-compliant alternatives.",
@@ -177,7 +177,7 @@
 
       // What the task should accomplish
       // Use {placeholder} inputs here; crewai run prompts for missing values
-      "description": "Critique the draft itinerary for feasibility (opening hours, travel times, pacing) and refine it.",
+      "description": "Critique the draft itinerary for feasibility (opening hours on {travel_dates}, travel times, pacing) and confirm it fits the {budget} budget, then refine it.",
 
       // Clear definition of what the output should look like
       "expected_output": "Polished final itinerary (optionally saved to trip_plan.md).",

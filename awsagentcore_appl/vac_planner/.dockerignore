@@ -1,0 +1,7 @@
+.env
+.venv/
+.git/
+.crewai/
+**/__pycache__/
+report.md
+*.md
