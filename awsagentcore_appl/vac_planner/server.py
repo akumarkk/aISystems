@@ -51,6 +51,11 @@ class Handler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", 0))
             request = json.loads(self.rfile.read(length) or b"{}")
+            # AgentCore only proxies POST /invocations, so {"path": "/ping"} routes to do_GET
+            if request.get("path") == "/ping":
+                self.path = "/ping"
+                self.do_GET()
+                return
             inputs = request.get("inputs") or {}
             missing = [k for k in REQUIRED_INPUTS if not str(inputs.get(k, "")).strip()]
             if missing:
