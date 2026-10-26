@@ -19,6 +19,7 @@
         "ecr:PutImage",
         "ecr:UploadLayerPart",
         "ecr:DescribeRepositories",
+        "ecr:DescribeImages",
         "ecr:GetDownloadUrlForLayer",
         "ecr:GetRepositoryPolicy"
       ],
@@ -89,6 +90,20 @@
         "logs:TagResource"
       ],
       "Resource": "arn:aws:logs:us-east-1:837873138218:log-group:/aws/lambda/vac-planner*"
-    }
-  ]
+          },
+          {
+            "Sid": "SecretsManagerVacPlanner",
+            "Effect": "Allow",
+            "Action": [
+              "secretsmanager:CreateSecret",
+              "secretsmanager:DescribeSecret",
+              "secretsmanager:GetSecretValue",
+              "secretsmanager:PutSecretValue",
+              "secretsmanager:UpdateSecret",
+              "secretsmanager:TagResource",
+              "secretsmanager:GetResourcePolicy"
+            ],
+            "Resource": "arn:aws:secretsmanager:us-east-1:837873138218:secret:vac-planner/*"
+          }
+        ]
 }
