@@ -1,0 +1,9 @@
+{
+  "inputs": {
+    "origin": "Seattle",
+    "travel_dates": "June 10-17, 2027",
+    "travelers": "2 adults",
+    "budget": "$5,000",
+    "interests": "food, hiking, history"
+  }
+}
