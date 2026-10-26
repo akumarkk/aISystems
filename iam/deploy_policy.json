@@ -104,6 +104,43 @@
               "secretsmanager:GetResourcePolicy"
             ],
             "Resource": "arn:aws:secretsmanager:us-east-1:837873138218:secret:vac-planner/*"
+          },
+          {
+            "Sid": "AgentCoreRuntimeRoleManagement",
+            "Effect": "Allow",
+            "Action": [
+              "iam:CreateRole",
+              "iam:GetRole",
+              "iam:UpdateAssumeRolePolicy",
+              "iam:PutRolePolicy",
+              "iam:GetRolePolicy",
+              "iam:ListRolePolicies",
+              "iam:DeleteRolePolicy",
+              "iam:TagRole"
+            ],
+            "Resource": "arn:aws:iam::837873138218:role/AgentCoreRuntime-*"
+          },
+          {
+            "Sid": "AgentCoreRuntimeDeploy",
+            "Effect": "Allow",
+            "Action": [
+              "bedrock-agentcore:CreateAgentRuntime",
+              "bedrock-agentcore:UpdateAgentRuntime",
+              "bedrock-agentcore:GetAgentRuntime",
+              "bedrock-agentcore:ListAgentRuntimes",
+              "bedrock-agentcore:ListAgentRuntimeVersions",
+              "bedrock-agentcore:DeleteAgentRuntime",
+              "bedrock-agentcore:CreateAgentRuntimeEndpoint",
+              "bedrock-agentcore:UpdateAgentRuntimeEndpoint",
+              "bedrock-agentcore:GetAgentRuntimeEndpoint",
+              "bedrock-agentcore:ListAgentRuntimeEndpoints",
+              "bedrock-agentcore:InvokeAgentRuntime",
+              "bedrock-agentcore:CreateWorkloadIdentity",
+              "bedrock-agentcore:GetWorkloadIdentity",
+              "bedrock-agentcore:TagResource",
+              "bedrock-agentcore:ListTagsForResource"
+            ],
+            "Resource": "arn:aws:bedrock-agentcore:us-east-1:837873138218:*"
           }
         ]
 }
