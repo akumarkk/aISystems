@@ -1,7 +1,7 @@
 # --- set these ---
 $REGION  = "us-east-1"
 $REPO    = "vac-planner"
-$TAG = "v0.2.0-port8080"
+$TAG = "v0.3.0-port8080"
 $ACCOUNT = aws sts get-caller-identity --query Account --output text
 $REGISTRY = "$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
 $IMAGE    = "$REGISTRY/${REPO}:$TAG"

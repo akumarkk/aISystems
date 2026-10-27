@@ -23,7 +23,7 @@ logger.setLevel(os.environ.get("LOG_LEVEL", "INFO").upper())
 # Configuration from environment variables
 DEFAULT_RUNTIME_ARN = "arn:aws:bedrock-agentcore:us-east-1:837873138218:runtime/vac_planner-4M3CfW8SGa"
 AGENT_RUNTIME_ARN = os.environ.get("AGENT_RUNTIME_ARN", DEFAULT_RUNTIME_ARN)
-AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
+TARGET_REGION = os.environ.get("TARGET_REGION") or os.environ.get("AWS_REGION") or "us-east-1"
 QUALIFIER = os.environ.get("QUALIFIER", "DEFAULT")
 
 # Reusable boto3 client
@@ -33,7 +33,7 @@ _client = None
 def get_agentcore_client():
     global _client
     if _client is None:
-        _client = boto3.client("bedrock-agentcore", region_name=AWS_REGION)
+        _client = boto3.client("bedrock-agentcore", region_name=TARGET_REGION)
     return _client
 
 

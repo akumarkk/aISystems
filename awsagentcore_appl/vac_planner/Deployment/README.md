@@ -27,7 +27,7 @@ This directory contains the AWS Lambda function and deployment automation to inv
 ## Files
 
 - [lambda_function.py](lambda_function.py): The Python Lambda handler. Handles session IDs (>= 33 chars), payload formatting, invocation via `bedrock-agentcore`, and response stream parsing.
-- [lambdaDeployment.ps1](lambdaDeployment.ps1): Automated PowerShell deployment script (IAM role setup, dependency bundling, function create/update, Function URL, and smoke testing).
+- [lambdaDeployment.ps1](lambdaDeployment.ps1): Automated PowerShell deployment script (verifies pre-configured IAM role, bundles dependencies, creates/updates function, configures Function URL, and smoke tests).
 - [test-event-ping.json](test-event-ping.json): Fast health check event (`{"path": "/ping"}`) that checks container status without incurring LLM charges.
 - [test-event-vacation.json](test-event-vacation.json): Full vacation planning request with sample inputs.
 
@@ -44,6 +44,13 @@ This directory contains the AWS Lambda function and deployment automation to inv
 2. **Python 3.10+** and `pip` available in PATH.
 3. Target **AgentCore Runtime ARN**:
    `arn:aws:bedrock-agentcore:us-east-1:837873138218:runtime/vac_planner-4M3CfW8SGa`
+4. **IAM Execution Role Pre-Configured**:
+   The execution role (`AgentCoreRuntime-vac-planner`) and its policies must be created/assigned **before deployment**:
+   ```powershell
+   cd ..\iam
+   .\deploy_role.ps1
+   # Or see iam/deploy_role.md
+   ```
 
 ---
 

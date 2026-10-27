@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script automates:
     1. Verification of AWS credentials and CLI prerequisites.
-    2. IAM execution role creation and policy configuration for Lambda to call Bedrock AgentCore.
+    2. Verification of the pre-configured IAM execution role (created/managed via iam/).
     3. Packaging lambda_function.py with the latest boto3/botocore dependencies (supporting bedrock-agentcore).
     4. Creating or updating the Lambda function (900s timeout for CrewAI multi-agent execution).
     5. (Optional) Configuring an HTTPS Lambda Function URL.
@@ -116,16 +116,18 @@ if (Test-Path $TMP_DIR) {
 }
 New-Item -ItemType Directory -Path $BUILD_DIR -Force | Out-Null
 
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
 function Write-Utf8JsonFile([string]$path, [object]$data) {
-    $json = $data | ConvertTo-Json -Depth 10 -Compress
-    [System.IO.File]::WriteAllText($path, $json, [System.Text.Encoding]::UTF8)
+    $json = if ($data -is [string]) { $data } else { $data | ConvertTo-Json -Depth 10 -Compress }
+    [System.IO.File]::WriteAllText($path, $json, $utf8NoBom)
     return $path
 }
 
 # -----------------------------------------------------------------------------
-# 3. Setup IAM Execution Role
+# 3. Verify IAM Execution Role
 # -----------------------------------------------------------------------------
-Write-Host "`n[2/6] Configuring IAM Execution Role: $RoleName..." -ForegroundColor Yellow
+Write-Host "`n[2/6] Verifying IAM Execution Role: $RoleName..." -ForegroundColor Yellow
 
 $roleArn = $null
 $origEAP = $ErrorActionPreference
@@ -135,42 +137,18 @@ $roleExitCode = $LASTEXITCODE
 $ErrorActionPreference = $origEAP
 
 if ($roleExitCode -ne 0 -or -not $roleCheck -or $roleCheck -like "*NoSuchEntity*") {
-    Write-Error "IAM role $RoleName was not found. Please ensure the role exists before deploying."
+    Write-Error @"
+IAM execution role '$RoleName' was not found.
+Please ensure the role and its policies are created before running deployment:
+  - Trust policy:       iam/trust-policy.json
+  - Permissions policy: iam/permissions-policy.json
+See iam/deploy_role.md or run iam/deploy_role.ps1 to create/update the role.
+"@
     exit 1
 }
 
 $roleArn = $roleCheck.Trim()
-Write-Host "Using existing IAM role: $roleArn" -ForegroundColor Green
-
-# Ensure basic execution policy (CloudWatch Logs) is attached
-aws iam attach-role-policy --role-name $RoleName `
-    --policy-arn "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" | Out-Null
-
-# Put inline policy for AgentCore invocation
-$agentCorePolicy = @{
-    Version = "2012-10-17"
-    Statement = @(
-        @{
-            Sid = "InvokeBedrockAgentCoreRuntime"
-            Effect = "Allow"
-            Action = @(
-                "bedrock-agentcore:InvokeAgentRuntime"
-            )
-            Resource = @(
-                $RuntimeArn,
-                "$RuntimeArn/*",
-                "arn:aws:bedrock-agentcore:${Region}:${ACCOUNT}:runtime/*"
-            )
-        }
-    )
-}
-$agentCorePolicyFile = Write-Utf8JsonFile (Join-Path $TMP_DIR "agentcore-policy.json") $agentCorePolicy
-
-aws iam put-role-policy --role-name $RoleName `
-    --policy-name "BedrockAgentCoreInvokeAccess" `
-    --policy-document "file://$agentCorePolicyFile" | Out-Null
-
-Write-Host "IAM permissions verified on role: $roleArn" -ForegroundColor Green
+Write-Host "Using verified IAM role: $roleArn" -ForegroundColor Green
 
 # -----------------------------------------------------------------------------
 # 4. Package Lambda Code & Dependencies
@@ -220,7 +198,7 @@ Write-Host "Deployment zip ready: $ZIP_PATH ($zipSizeMb MB)" -ForegroundColor Gr
 # -----------------------------------------------------------------------------
 Write-Host "`n[4/6] Deploying Lambda function: $FunctionName..." -ForegroundColor Yellow
 
-$envVars = "Variables={AGENT_RUNTIME_ARN=$RuntimeArn,QUALIFIER=$Qualifier,AWS_REGION=$Region}"
+$envVars = "Variables={AGENT_RUNTIME_ARN=$RuntimeArn,QUALIFIER=$Qualifier,TARGET_REGION=$Region}"
 
 # In PowerShell with $ErrorActionPreference = "Stop", native CLI output on stderr (e.g. ResourceNotFoundException)
 # throws a NativeCommandError. Temporarily use Continue and capture output.
@@ -259,7 +237,11 @@ if ($funcExitCode -eq 0) {
         --timeout $Timeout `
         --memory-size $MemorySize `
         --environment $envVars `
-        --region $Region | Out-Null
+        --region $Region
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to create Lambda function $FunctionName."
+        exit 1
+    }
 
     Write-Host "Waiting for function to become active..."
     # Older CLI versions use function-active, newer use function-active-v2
@@ -286,26 +268,49 @@ if ($CreateFunctionUrl) {
     $ErrorActionPreference = $origEAP
 
     if ($urlExitCode -ne 0) {
-        $urlConfig = aws lambda create-function-url-config `
-            --function-name $FunctionName `
-            --auth-type NONE `
-            --cors '{"AllowOrigins":["*"],"AllowMethods":["POST","GET"],"AllowHeaders":["content-type"]}' `
-            --region $Region
-        
-        # Grant public invoke permission
+        $corsConfig = @{
+            AllowOrigins = @("*")
+            AllowMethods = @("POST", "GET")
+            AllowHeaders = @("content-type")
+        }
+        $corsFile = Join-Path $TMP_DIR "cors-config.json"
+        Write-Utf8JsonFile $corsFile $corsConfig | Out-Null
+
         $origEAP = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
-        aws lambda add-permission `
+        $createUrlOut = aws lambda create-function-url-config `
             --function-name $FunctionName `
-            --statement-id "FunctionURLAllowPublicAccess" `
-            --action "lambda:InvokeFunctionUrl" `
-            --principal "*" `
-            --function-url-auth-type NONE `
-            --region $Region 2>&1 | Out-Null
+            --auth-type NONE `
+            --cors "file://$corsFile" `
+            --region $Region 2>&1
+        $createUrlExit = $LASTEXITCODE
         $ErrorActionPreference = $origEAP
+
+        if ($createUrlExit -ne 0) {
+            Write-Warning "Failed to create Function URL: $createUrlOut"
+        } else {
+            $urlConfig = $createUrlOut
+            # Grant public invoke permission
+            $origEAP = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            aws lambda add-permission `
+                --function-name $FunctionName `
+                --statement-id "FunctionURLAllowPublicAccess" `
+                --action "lambda:InvokeFunctionUrl" `
+                --principal "*" `
+                --function-url-auth-type NONE `
+                --region $Region 2>&1 | Out-Null
+            $ErrorActionPreference = $origEAP
+        }
     }
-    $funcUrl = ($urlConfig | ConvertFrom-Json).FunctionUrl
-    Write-Host "Function URL created: $funcUrl" -ForegroundColor Cyan
+    if ($urlConfig -and $urlConfig -notlike "*ERROR*") {
+        try {
+            $funcUrl = ($urlConfig | ConvertFrom-Json).FunctionUrl
+            Write-Host "Function URL created: $funcUrl" -ForegroundColor Cyan
+        } catch {
+            Write-Warning "Could not parse Function URL output: $urlConfig"
+        }
+    }
 } else {
     Write-Host "`n[5/6] Skipping Function URL (pass -CreateFunctionUrl to enable)." -ForegroundColor DarkGray
 }
@@ -318,7 +323,7 @@ Write-Host "`n[6/6] Smoke Testing..." -ForegroundColor Yellow
 if ($TestPing) {
     Write-Host "Running health check ping test..." -ForegroundColor Yellow
     $pingEventFile = Join-Path $TMP_DIR "ping_request.json"
-    [System.IO.File]::WriteAllText($pingEventFile, '{"path":"/ping"}', [System.Text.Encoding]::UTF8)
+    Write-Utf8JsonFile $pingEventFile '{"path":"/ping"}' | Out-Null
     $pingResponseFile = Join-Path $TMP_DIR "ping_response.json"
 
     aws lambda invoke `
