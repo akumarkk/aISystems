@@ -4,7 +4,10 @@
     {
       "Sid": "PullImage",
       "Effect": "Allow",
-      "Action": ["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer"],
+      "Action": [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ],
       "Resource": "arn:aws:ecr:us-east-1:837873138218:repository/vac-planner"
     },
     {
@@ -14,7 +17,7 @@
       "Resource": "*"
     },
     {
-      "Sid": "Logs",
+      "Sid": "AgentCoreRuntimeLogs",
       "Effect": "Allow",
       "Action": [
         "logs:CreateLogGroup",
@@ -26,17 +29,40 @@
       "Resource": "arn:aws:logs:us-east-1:837873138218:log-group:/aws/bedrock-agentcore/runtimes/*"
     },
     {
+      "Sid": "LambdaLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:us-east-1:837873138218:log-group:/aws/lambda/*"
+    },
+    {
+      "Sid": "InvokeBedrockAgentCoreRuntime",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock-agentcore:InvokeAgentRuntime"
+      ],
+      "Resource": "arn:aws:bedrock-agentcore:us-east-1:837873138218:runtime/*"
+    },
+    {
       "Sid": "Traces",
       "Effect": "Allow",
-      "Action": ["xray:PutTraceSegments", "xray:PutTelemetryRecords"],
+      "Action": [
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords",
+        "xray:GetSamplingRules",
+        "xray:GetSamplingTargets",
+        "xray:GetSamplingStatisticSummaries"
+      ],
       "Resource": "*"
     },
     {
       "Sid": "Metrics",
       "Effect": "Allow",
       "Action": "cloudwatch:PutMetricData",
-      "Resource": "*",
-      "Condition": { "StringEquals": { "cloudwatch:namespace": "bedrock-agentcore" } }
+      "Resource": "*"
     },
     {
       "Sid": "MistralKey",
@@ -46,3 +72,4 @@
     }
   ]
 }
+
