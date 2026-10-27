@@ -2,13 +2,29 @@
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Sid": "LambdaTrust",
       "Effect": "Allow",
-      "Principal": { "Service": "bedrock-agentcore.amazonaws.com" },
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    },
+    {
+      "Sid": "BedrockAgentCoreTrust",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "bedrock-agentcore.amazonaws.com"
+      },
       "Action": "sts:AssumeRole",
       "Condition": {
-        "StringEquals": { "aws:SourceAccount": "837873138218" },
-        "ArnLike": { "aws:SourceArn": "arn:aws:bedrock-agentcore:us-east-1:837873138218:*" }
+        "StringEquals": {
+          "aws:SourceAccount": "837873138218"
+        },
+        "ArnLike": {
+          "aws:SourceArn": "arn:aws:bedrock-agentcore:us-east-1:837873138218:*"
+        }
       }
     }
   ]
 }
+
