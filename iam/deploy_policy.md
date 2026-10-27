@@ -21,4 +21,8 @@ aws iam list-policy-versions --policy-arn arn:aws:iam::837873138218:policy/vac-p
 
 aws iam delete-policy-version --policy-arn arn:aws:iam::837873138218:policy/vac-planner-deploy --version-id v1
 
+aws iam set-default-policy-version --policy-arn arn:aws:iam::837873138218:policy/vac-planner-deploy --version-id v7
+
+aws iam set-default-policy-version --policy-arn arn:aws:iam::837873138218:policy/vac-planner-deploy --version-id v7
+
 ```
