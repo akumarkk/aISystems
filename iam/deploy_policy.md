@@ -12,3 +12,13 @@ aws iam list-attached-user-policies --user-name ai-engr
 // update
 aws iam create-policy-version --policy-arn arn:aws:iam::837873138218:policy/vac-planner-deploy --policy-document file://deploy_policy.json --set-as-default
 ```
+
+
+##### limit exceeded
+```
+
+aws iam list-policy-versions --policy-arn arn:aws:iam::837873138218:policy/vac-planner-deploy
+
+aws iam delete-policy-version --policy-arn arn:aws:iam::837873138218:policy/vac-planner-deploy --version-id v1
+
+```
