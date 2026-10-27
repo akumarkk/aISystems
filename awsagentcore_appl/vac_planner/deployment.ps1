@@ -48,7 +48,15 @@ $ROLE_ARN = "arn:aws:iam::837873138218:role/AgentCoreRuntime-vac-planner"
 $artifact = Write-Json "artifact.json" @{ containerConfiguration = @{ containerUri = $IMAGE } }
 $network  = Write-Json "network.json"  @{ networkMode = "PUBLIC" }   # dev only; use VPC mode for production
 $protocol = Write-Json "protocol.json" @{ serverProtocol = "HTTP" }
-$envvars  = Write-Json "env.json"      @{ MISTRAL_SECRET_ID = $SECRET_NAME }
+$envvars  = Write-Json "env.json"      @{
+  MISTRAL_SECRET_ID = $SECRET_NAME
+  AGENT_OBSERVABILITY_ENABLED = "true"
+  OTEL_PYTHON_DISTRO = "aws_distro"
+  OTEL_PYTHON_CONFIGURATOR = "aws_configurator"
+  OTEL_SERVICE_NAME = "vac_planner"
+  CREWAI_DISABLE_TELEMETRY = "true"
+  OTEL_EXPORTER_OTLP_LOGS_HEADERS = "x-aws-log-group=/aws/bedrock-agentcore/runtimes/$RUNTIME_NAME,x-aws-log-stream=default"
+}
 
 $RUNTIME_ID = aws bedrock-agentcore-control list-agent-runtimes --region $REGION `
   --query "agentRuntimes[?agentRuntimeName=='$RUNTIME_NAME'].agentRuntimeId | [0]" --output text

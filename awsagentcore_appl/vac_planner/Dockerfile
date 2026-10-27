@@ -9,7 +9,13 @@ ENV PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     PORT=8080 \
-    PATH="/app/.venv/bin:$PATH"
+    PATH="/app/.venv/bin:$PATH" \
+    OTEL_PYTHON_DISTRO=aws_distro \
+    OTEL_PYTHON_CONFIGURATOR=aws_configurator \
+    AGENT_OBSERVABILITY_ENABLED=true \
+    OTEL_SERVICE_NAME=vac_planner \
+    CREWAI_DISABLE_TELEMETRY=true \
+    OTEL_EXPORTER_OTLP_LOGS_HEADERS="x-aws-log-group=/aws/bedrock-agentcore/runtimes/vac_planner,x-aws-log-stream=default"
 
 WORKDIR /app
 
@@ -27,4 +33,4 @@ RUN useradd --create-home --uid 1000 app && chown -R app /app
 USER app
 
 EXPOSE 8080
-CMD ["python", "server.py"]
+CMD ["opentelemetry-instrument", "python", "server.py"]

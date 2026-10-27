@@ -218,16 +218,17 @@ if ($funcExitCode -eq 0) {
     Write-Host "Waiting for function code update..."
     aws lambda wait function-updated --function-name $FunctionName --region $Region
 
-    Write-Host "Updating function configuration (Timeout=$Timeout, Memory=$MemorySize)..."
+    Write-Host "Updating function configuration (Timeout=$Timeout, Memory=$MemorySize, Tracing=Active)..."
     aws lambda update-function-configuration `
         --function-name $FunctionName `
         --role $roleArn `
         --timeout $Timeout `
         --memory-size $MemorySize `
         --environment $envVars `
+        --tracing-config Mode=Active `
         --region $Region | Out-Null
 } else {
-    Write-Host "Function does not exist yet. Creating new Lambda function $FunctionName..."
+    Write-Host "Function does not exist yet. Creating new Lambda function $FunctionName (Tracing=Active)..."
     aws lambda create-function `
         --function-name $FunctionName `
         --runtime $PythonRuntime `
@@ -237,6 +238,7 @@ if ($funcExitCode -eq 0) {
         --timeout $Timeout `
         --memory-size $MemorySize `
         --environment $envVars `
+        --tracing-config Mode=Active `
         --region $Region
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to create Lambda function $FunctionName."

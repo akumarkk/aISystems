@@ -12,12 +12,17 @@ merged over crew.jsonc "inputs".
 """
 
 import json
+import logging
 import os
 import tomllib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from crewai.project.crew_loader import load_crew_and_kickoff
+from opentelemetry import propagate, trace
+from opentelemetry.trace import StatusCode
+
+logger = logging.getLogger("vac_planner")
 
 ROOT = Path(__file__).parent
 CREW_PATH = ROOT / "crew.jsonc"
@@ -27,6 +32,28 @@ VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["versi
 
 # Placeholders used in crew.jsonc / agents/*.jsonc
 REQUIRED_INPUTS = ("origin", "travel_dates", "travelers", "budget", "interests")
+
+tracer = trace.get_tracer("vac_planner", VERSION)
+
+
+def init_observability() -> None:
+    """Initialize OpenTelemetry AWS distro and Agent Observability if not started via opentelemetry-instrument."""
+    if os.environ.get("AGENT_OBSERVABILITY_ENABLED", "false").lower() == "true":
+        if type(trace.get_tracer_provider()).__name__ != "ProxyTracerProvider":
+            return
+        try:
+            from amazon.opentelemetry.distro.aws_opentelemetry_distro import AwsOpenTelemetryDistro
+            from amazon.opentelemetry.distro.aws_opentelemetry_configurator import AwsOpenTelemetryConfigurator
+            from opentelemetry.instrumentation.auto_instrumentation._load import _load_instrumentors
+
+            distro = AwsOpenTelemetryDistro()
+            distro.configure()
+            configurator = AwsOpenTelemetryConfigurator()
+            configurator.configure()
+            _load_instrumentors(distro)
+            print("AWS OpenTelemetry Distro & Agent Observability initialized.", flush=True)
+        except Exception as exc:
+            print(f"Warning: Failed to initialize OpenTelemetry distro: {exc}", flush=True)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -48,23 +75,48 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/invocations":
             self._send(404, {"error": "not found"})
             return
-        try:
-            length = int(self.headers.get("Content-Length", 0))
-            request = json.loads(self.rfile.read(length) or b"{}")
-            # AgentCore only proxies POST /invocations, so {"path": "/ping"} routes to do_GET
-            if request.get("path") == "/ping":
-                self.path = "/ping"
-                self.do_GET()
-                return
-            inputs = request.get("inputs") or {}
-            missing = [k for k in REQUIRED_INPUTS if not str(inputs.get(k, "")).strip()]
-            if missing:
-                self._send(400, {"error": "missing required inputs", "missing": missing})
-                return
-            result = load_crew_and_kickoff(CREW_PATH, inputs)
-            self._send(200, {"result": result.raw})
-        except Exception as exc:
-            self._send(500, {"error": str(exc)})
+
+        carrier = dict(self.headers)
+        context = propagate.extract(carrier)
+
+        with tracer.start_as_current_span("agentcore.invocations", context=context) as span:
+            span.set_attribute("gen_ai.agent.name", "vac_planner")
+            span.set_attribute("gen_ai.system", "crewai")
+            span.set_attribute("service.name", os.environ.get("OTEL_SERVICE_NAME", "vac_planner"))
+            span.set_attribute("service.version", VERSION)
+
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                request = json.loads(self.rfile.read(length) or b"{}")
+                # AgentCore only proxies POST /invocations, so {"path": "/ping"} routes to do_GET
+                if request.get("path") == "/ping":
+                    span.set_attribute("agentcore.request_type", "ping")
+                    self.path = "/ping"
+                    self.do_GET()
+                    return
+
+                span.set_attribute("agentcore.request_type", "kickoff")
+                inputs = request.get("inputs") or {}
+                for key in REQUIRED_INPUTS:
+                    if key in inputs:
+                        span.set_attribute(f"vac_planner.input.{key}", str(inputs[key]))
+
+                missing = [k for k in REQUIRED_INPUTS if not str(inputs.get(k, "")).strip()]
+                if missing:
+                    span.set_attribute("vac_planner.missing_inputs", missing)
+                    span.set_status(StatusCode.ERROR, f"Missing required inputs: {', '.join(missing)}")
+                    self._send(400, {"error": "missing required inputs", "missing": missing})
+                    return
+
+                result = load_crew_and_kickoff(CREW_PATH, inputs)
+                span.set_attribute("vac_planner.success", True)
+                span.set_status(StatusCode.OK)
+                self._send(200, {"result": result.raw})
+            except Exception as exc:
+                span.record_exception(exc)
+                span.set_status(StatusCode.ERROR, str(exc))
+                logger.error("Invocation failed: %s", exc, exc_info=True)
+                self._send(500, {"error": str(exc)})
 
 
 def load_secrets() -> None:
@@ -78,6 +130,7 @@ def load_secrets() -> None:
 
 
 if __name__ == "__main__":
+    init_observability()
     load_secrets()
     port = int(os.environ.get("PORT", "8080"))
     print(f"vac_planner {VERSION} listening on :{port}", flush=True)
