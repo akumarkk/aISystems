@@ -114,13 +114,23 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """Main Lambda entrypoint."""
     logger.info("Received event: %s", json.dumps(event, default=str))
 
-    # Fast health check for HTTP GET /ping via Function URL / API Gateway
+    # Lambda's own health check for HTTP GET /ping via Function URL / API Gateway (no runtime call).
+    # To health-check the runtime itself, send {"path": "/ping"} as the payload instead.
     http_method = event.get("httpMethod") or event.get("requestContext", {}).get("http", {}).get("method")
     raw_path = event.get("rawPath") or event.get("path")
     if http_method == "GET" and raw_path == "/ping":
-        request_data = {"path": "/ping"}
-    else:
-        request_data = extract_request_data(event)
+        return format_response(
+            200,
+            {
+                "status": "Healthy",
+                "service": "vac-planner-agentcore-invoker",
+                "agentRuntimeArn": AGENT_RUNTIME_ARN,
+                "qualifier": QUALIFIER,
+                "region": TARGET_REGION,
+            },
+        )
+
+    request_data = extract_request_data(event)
 
     # Session ID handling (must be 33+ characters)
     session_id = generate_session_id(
