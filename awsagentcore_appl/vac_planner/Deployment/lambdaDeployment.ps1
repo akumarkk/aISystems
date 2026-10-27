@@ -128,63 +128,21 @@ function Write-Utf8JsonFile([string]$path, [object]$data) {
 Write-Host "`n[2/6] Configuring IAM Execution Role: $RoleName..." -ForegroundColor Yellow
 
 $roleArn = $null
-$roleCheck = aws iam get-role --role-name $RoleName --query "Role.Arn" --output text 2>$null
-$newRoleCreated = $false
+$origEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+$roleCheck = aws iam get-role --role-name $RoleName --query "Role.Arn" --output text 2>&1
+$roleExitCode = $LASTEXITCODE
+$ErrorActionPreference = $origEAP
 
-if ($LASTEXITCODE -ne 0 -or -not $roleCheck -or $roleCheck -eq "None") {
-    Write-Host "Creating IAM role $RoleName..."
-    $trustPolicy = @{
-        Version = "2012-10-17"
-        Statement = @(
-            @{
-                Effect = "Allow"
-                Principal = @{
-                    Service = @("lambda.amazonaws.com", "bedrock-agentcore.amazonaws.com")
-                }
-                Action = "sts:AssumeRole"
-            }
-        )
-    }
-    $trustPolicyFile = Write-Utf8JsonFile (Join-Path $TMP_DIR "trust-policy.json") $trustPolicy
-
-    $roleArn = aws iam create-role --role-name $RoleName `
-        --assume-role-policy-document "file://$trustPolicyFile" `
-        --query "Role.Arn" --output text
-    $newRoleCreated = $true
-} else {
-    $roleArn = $roleCheck
-    Write-Host "IAM role $RoleName already exists ($roleArn)."
-
-    # Verify/update trust policy to ensure lambda.amazonaws.com can assume the role
-    $currentRoleJson = aws iam get-role --role-name $RoleName --output json | ConvertFrom-Json
-    $assumeDoc = $currentRoleJson.Role.AssumeRolePolicyDocument
-    $principals = @()
-    foreach ($stmt in $assumeDoc.Statement) {
-        $svc = $stmt.Principal.Service
-        if ($svc -is [array]) { $principals += $svc }
-        elseif ($svc) { $principals += @($svc) }
-    }
-
-    if ("lambda.amazonaws.com" -notin $principals) {
-        Write-Host "Adding lambda.amazonaws.com to trust policy for role $RoleName..."
-        $updatedTrustStatements = @($assumeDoc.Statement) + @(
-            @{
-                Effect = "Allow"
-                Principal = @{ Service = "lambda.amazonaws.com" }
-                Action = "sts:AssumeRole"
-            }
-        )
-        $updatedTrust = @{
-            Version = "2012-10-17"
-            Statement = $updatedTrustStatements
-        }
-        $updatedTrustFile = Write-Utf8JsonFile (Join-Path $TMP_DIR "updated-trust-policy.json") $updatedTrust
-        aws iam update-assume-role-policy --role-name $RoleName --policy-document "file://$updatedTrustFile" | Out-Null
-        Write-Host "Trust policy updated to include lambda.amazonaws.com." -ForegroundColor Green
-    }
+if ($roleExitCode -ne 0 -or -not $roleCheck -or $roleCheck -like "*NoSuchEntity*") {
+    Write-Error "IAM role $RoleName was not found. Please ensure the role exists before deploying."
+    exit 1
 }
 
-# Attach basic execution policy (CloudWatch Logs)
+$roleArn = $roleCheck.Trim()
+Write-Host "Using existing IAM role: $roleArn" -ForegroundColor Green
+
+# Ensure basic execution policy (CloudWatch Logs) is attached
 aws iam attach-role-policy --role-name $RoleName `
     --policy-arn "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" | Out-Null
 
@@ -212,12 +170,7 @@ aws iam put-role-policy --role-name $RoleName `
     --policy-name "BedrockAgentCoreInvokeAccess" `
     --policy-document "file://$agentCorePolicyFile" | Out-Null
 
-Write-Host "IAM Role configured: $roleArn" -ForegroundColor Green
-
-if ($newRoleCreated) {
-    Write-Host "Waiting 12 seconds for IAM role eventual consistency..." -ForegroundColor DarkGray
-    Start-Sleep -Seconds 12
-}
+Write-Host "IAM permissions verified on role: $roleArn" -ForegroundColor Green
 
 # -----------------------------------------------------------------------------
 # 4. Package Lambda Code & Dependencies
@@ -269,8 +222,15 @@ Write-Host "`n[4/6] Deploying Lambda function: $FunctionName..." -ForegroundColo
 
 $envVars = "Variables={AGENT_RUNTIME_ARN=$RuntimeArn,QUALIFIER=$Qualifier,AWS_REGION=$Region}"
 
-$funcCheck = aws lambda get-function --function-name $FunctionName --region $Region 2>$null
-if ($LASTEXITCODE -eq 0) {
+# In PowerShell with $ErrorActionPreference = "Stop", native CLI output on stderr (e.g. ResourceNotFoundException)
+# throws a NativeCommandError. Temporarily use Continue and capture output.
+$origEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+$funcCheckRaw = aws lambda get-function --function-name $FunctionName --region $Region 2>&1
+$funcExitCode = $LASTEXITCODE
+$ErrorActionPreference = $origEAP
+
+if ($funcExitCode -eq 0) {
     Write-Host "Updating code for existing Lambda function..."
     aws lambda update-function-code `
         --function-name $FunctionName `
@@ -289,7 +249,7 @@ if ($LASTEXITCODE -eq 0) {
         --environment $envVars `
         --region $Region | Out-Null
 } else {
-    Write-Host "Creating new Lambda function $FunctionName..."
+    Write-Host "Function does not exist yet. Creating new Lambda function $FunctionName..."
     aws lambda create-function `
         --function-name $FunctionName `
         --runtime $PythonRuntime `
@@ -303,10 +263,13 @@ if ($LASTEXITCODE -eq 0) {
 
     Write-Host "Waiting for function to become active..."
     # Older CLI versions use function-active, newer use function-active-v2
+    $origEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
     aws lambda wait function-active-v2 --function-name $FunctionName --region $Region 2>$null
     if ($LASTEXITCODE -ne 0) {
         aws lambda wait function-active --function-name $FunctionName --region $Region 2>$null
     }
+    $ErrorActionPreference = $origEAP
 }
 
 Write-Host "Lambda function $FunctionName deployed successfully!" -ForegroundColor Green
@@ -316,8 +279,13 @@ Write-Host "Lambda function $FunctionName deployed successfully!" -ForegroundCol
 # -----------------------------------------------------------------------------
 if ($CreateFunctionUrl) {
     Write-Host "`n[5/6] Configuring Lambda Function URL..." -ForegroundColor Yellow
-    $urlConfig = aws lambda get-function-url-config --function-name $FunctionName --region $Region 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    $origEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $urlConfig = aws lambda get-function-url-config --function-name $FunctionName --region $Region 2>&1
+    $urlExitCode = $LASTEXITCODE
+    $ErrorActionPreference = $origEAP
+
+    if ($urlExitCode -ne 0) {
         $urlConfig = aws lambda create-function-url-config `
             --function-name $FunctionName `
             --auth-type NONE `
@@ -325,13 +293,16 @@ if ($CreateFunctionUrl) {
             --region $Region
         
         # Grant public invoke permission
+        $origEAP = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         aws lambda add-permission `
             --function-name $FunctionName `
             --statement-id "FunctionURLAllowPublicAccess" `
             --action "lambda:InvokeFunctionUrl" `
             --principal "*" `
             --function-url-auth-type NONE `
-            --region $Region 2>$null | Out-Null
+            --region $Region 2>&1 | Out-Null
+        $ErrorActionPreference = $origEAP
     }
     $funcUrl = ($urlConfig | ConvertFrom-Json).FunctionUrl
     Write-Host "Function URL created: $funcUrl" -ForegroundColor Cyan
@@ -346,13 +317,14 @@ Write-Host "`n[6/6] Smoke Testing..." -ForegroundColor Yellow
 
 if ($TestPing) {
     Write-Host "Running health check ping test..." -ForegroundColor Yellow
-    $pingEvent = '{"path":"/ping"}'
+    $pingEventFile = Join-Path $TMP_DIR "ping_request.json"
+    [System.IO.File]::WriteAllText($pingEventFile, '{"path":"/ping"}', [System.Text.Encoding]::UTF8)
     $pingResponseFile = Join-Path $TMP_DIR "ping_response.json"
 
     aws lambda invoke `
         --function-name $FunctionName `
         --cli-binary-format raw-in-base64-out `
-        --payload $pingEvent `
+        --payload "fileb://$pingEventFile" `
         --region $Region `
         $pingResponseFile | Out-Null
 
