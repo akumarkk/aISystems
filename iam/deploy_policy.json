@@ -206,7 +206,10 @@
               "dynamodb:ListTagsOfResource",
               "dynamodb:TagResource",
               "dynamodb:UntagResource",
-              "dynamodb:PutItem"
+              "dynamodb:PutItem",
+              "dynamodb:GetItem",
+              "dynamodb:UpdateItem",
+              "dynamodb:DeleteItem"
             ],
             "Resource": "arn:aws:dynamodb:us-east-1:837873138218:table/TravelPlans"
           }
