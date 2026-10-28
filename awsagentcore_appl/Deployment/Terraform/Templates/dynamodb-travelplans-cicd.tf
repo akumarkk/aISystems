@@ -3,7 +3,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = ">= 5.0"
     }
   }
 }
@@ -15,12 +15,12 @@ provider "aws" {
 resource "aws_dynamodb_table" "travel_plans" {
   name         = "TravelPlans"
   billing_mode = "PAY_PER_REQUEST" # On-demand capacity
-  hash_key     = "City"
+  hash_key     = "TravelCity"
   range_key    = "Duration"
 
   # Primary Key Attributes
   attribute {
-    name = "City"
+    name = "TravelCity"
     type = "S" # String
   }
 
