@@ -95,7 +95,7 @@ resource "aws_dynamodb_table_item" "item_5" {
   range_key  = data.aws_dynamodb_table.travel_plans.range_key
 
   item = jsonencode({
-    ravelCity         = { S = "Sedona" }
+    TravelCity   = { S = "Sedona" }
     Duration     = { N = "4" }
     origin       = { S = "Los Angeles" }
     travel_dates = { S = "September 18-22, 2027" }
