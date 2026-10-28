@@ -178,6 +178,27 @@
             "Effect": "Allow",
             "Action": "execute-api:Invoke",
             "Resource": "arn:aws:execute-api:us-east-1:837873138218:6y93gsmga0/prod/*/vacation_planner_v1/*"
+          },
+          {
+            "Sid": "AllowAssumeBedrockRole",
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::837873138218:role/service-role/bedrock-loggroup-v1"
+          },
+          {
+            "Sid": "UpdateBedrockLogRoleTrust",
+            "Effect": "Allow",
+            "Action": ["iam:UpdateAssumeRolePolicy", "iam:GetRole"],
+            "Resource": "arn:aws:iam::837873138218:role/service-role/bedrock-loggroup-v1"
+          },
+          {
+            "Sid": "TravelPlansTableAccess",
+            "Effect": "Allow",
+            "Action": [
+              "dynamodb:DescribeTable",
+              "dynamodb:PutItem"
+            ],
+            "Resource": "arn:aws:dynamodb:us-east-1:837873138218:table/TravelPlans"
           }
         ]
 }
