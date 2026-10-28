@@ -195,7 +195,15 @@
             "Sid": "TravelPlansTableAccess",
             "Effect": "Allow",
             "Action": [
+              "dynamodb:CreateTable",
+              "dynamodb:DeleteTable",
+              "dynamodb:UpdateTable",
               "dynamodb:DescribeTable",
+              "dynamodb:DescribeContinuousBackups",
+              "dynamodb:DescribeTimeToLive",
+              "dynamodb:ListTagsOfResource",
+              "dynamodb:TagResource",
+              "dynamodb:UntagResource",
               "dynamodb:PutItem"
             ],
             "Resource": "arn:aws:dynamodb:us-east-1:837873138218:table/TravelPlans"
