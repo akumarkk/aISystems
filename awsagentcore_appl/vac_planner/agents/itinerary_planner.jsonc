@@ -4,6 +4,8 @@
   // Example: "role": "Senior {industry} Researcher"
   "role": "Itinerary Planner",
 
+  "description": "Before drafting, call query_travel_plans with the selected destination city. If saved plans exist, reuse and adapt them; only plan from scratch if none are found. Then combine the Destination Researcher's and Local Expert's outputs into a full day-by-day plan covering {travel_dates} for {travelers}, with activities, timings, restaurants, and transit notes.",
+  
   // Optional custom Agent subclass
   // "type": {"python": "my_project.agents.CustomAgent"},
 

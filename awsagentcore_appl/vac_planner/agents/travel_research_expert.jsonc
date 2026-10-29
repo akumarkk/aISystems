@@ -3,6 +3,7 @@
   // You can use {placeholder} inputs in role, goal, or backstory.
   // Example: "role": "Senior {industry} Researcher"
   "role": "Travel research expert",
+  "description" : "First call the query_travel_plans tool with each candidate destination city to check for existing saved travel plans, and reuse them where relevant. Then, using web search tools, research and rank candidate destinations for {travelers} traveling from {origin} during {travel_dates}, with a total budget of {budget} and interests in {interests}. Give clear rationale for each.",
 
   // Optional custom Agent subclass
   // "type": {"python": "my_project.agents.CustomAgent"},
