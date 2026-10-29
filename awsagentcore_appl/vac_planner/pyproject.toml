@@ -8,6 +8,7 @@ dependencies = [
     "aws-opentelemetry-distro>=0.21.0",
     "crewai[anthropic,litellm,tools]>=1.15.23,<2.0.0",
     "litellm>=1.106.4",
+    "requests>=2.34.2",
 ]
 
 [build-system]
