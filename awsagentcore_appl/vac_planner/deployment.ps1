@@ -59,6 +59,8 @@ $envvars  = Write-Json "env.json"      @{
   OIDC_CLIENTSECRET_Local_Expert_City_Guide = $env:OIDC_CLIENTSECRET_Local_Expert_City_Guide
   OIDC_CLIENTID_Local_Expert_City_Guide     = $env:OIDC_CLIENTID_Local_Expert_City_Guide
   OIDC_AUTHORITY                       = $env:OIDC_AUTHORITY
+  GATEWAY_URL = $env:GATEWAY_URL
+  
 }
 
 $RUNTIME_ID = aws bedrock-agentcore-control list-agent-runtimes --region $REGION `
