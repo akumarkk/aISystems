@@ -106,3 +106,75 @@ resource "aws_dynamodb_table_item" "item_5" {
     TravelPlan   = { S = "4-day red rock wellness retreat: Day 1 Bell Rock trail & sunset vortex; Day 2 Cathedral Rock sunrise hike and Pink Jeep tour; Day 3 Oak Creek Canyon and Tlaquepaque arts village; Day 4 Stargazing night session and departure." }
   })
 }
+
+resource "aws_dynamodb_table_item" "item_6" {
+  table_name = data.aws_dynamodb_table.travel_plans.name
+  hash_key   = data.aws_dynamodb_table.travel_plans.hash_key
+  range_key  = data.aws_dynamodb_table.travel_plans.range_key
+
+  item = jsonencode({
+    TravelCity   = { S = "Lisbon" }
+    Duration     = { N = "5" }
+    origin       = { S = "Boston" }
+    travel_dates = { S = "May 14-19, 2027" }
+    travelers    = { S = "2 adults" }
+    budget       = { S = "$3,800" }
+    interests    = { S = "history, food, coastal views" }
+    VacationCost = { N = "3400" }
+    TravelPlan   = { S = "5-day Lisbon highlights: Day 1 Alfama district walk & Fado show; Day 2 Belém Tower and Jerónimos Monastery; Day 3 Day trip to Sintra palaces; Day 4 Cascais coastal exploration; Day 5 Time Out Market culinary tour & departure." }
+  })
+}
+
+resource "aws_dynamodb_table_item" "item_7" {
+  table_name = data.aws_dynamodb_table.travel_plans.name
+  hash_key   = data.aws_dynamodb_table.travel_plans.hash_key
+  range_key  = data.aws_dynamodb_table.travel_plans.range_key
+
+  item = jsonencode({
+    TravelCity   = { S = "San Sebastian" }
+    Duration     = { N = "4" }
+    origin       = { S = "Chicago" }
+    travel_dates = { S = "June 20-24, 2027" }
+    travelers    = { S = "2 adults" }
+    budget       = { S = "$3,200" }
+    interests    = { S = "pintxos, beaches, culinary arts" }
+    VacationCost = { N = "2900" }
+    TravelPlan   = { S = "4-day Basque culinary journey: Day 1 La Concha Beach & Parte Vieja pintxos tour; Day 2 Mount Igueldo funicular & Miramar Palace; Day 3 Michelin-starred dining & Zurriola surf beach; Day 4 Peine del Viento coastal stroll & departure." }
+  })
+}
+
+resource "aws_dynamodb_table_item" "item_8" {
+  table_name = data.aws_dynamodb_table.travel_plans.name
+  hash_key   = data.aws_dynamodb_table.travel_plans.hash_key
+  range_key  = data.aws_dynamodb_table.travel_plans.range_key
+
+  item = jsonencode({
+    TravelCity   = { S = "Porto" }
+    Duration     = { N = "4" }
+    origin       = { S = "Miami" }
+    travel_dates = { S = "October 4-8, 2027" }
+    travelers    = { S = "2 adults" }
+    budget       = { S = "$3,000" }
+    interests    = { S = "wine tasting, architecture, river cruises" }
+    VacationCost = { N = "2600" }
+    TravelPlan   = { S = "4-day Porto wine & river experience: Day 1 Ribeira district & Dom Luís I Bridge; Day 2 Vila Nova de Gaia port wine cellars; Day 3 Douro Valley river cruise & vineyard lunch; Day 4 Livraria Lello & São Bento Station stroll before departure." }
+  })
+}
+
+resource "aws_dynamodb_table_item" "item_9" {
+  table_name = data.aws_dynamodb_table.travel_plans.name
+  hash_key   = data.aws_dynamodb_table.travel_plans.hash_key
+  range_key  = data.aws_dynamodb_table.travel_plans.range_key
+
+  item = jsonencode({
+    TravelCity   = { S = "Rome" }
+    Duration     = { N = "6" }
+    origin       = { S = "Washington DC" }
+    travel_dates = { S = "April 18-24, 2027" }
+    travelers    = { S = "2 adults" }
+    budget       = { S = "$4,500" }
+    interests    = { S = "history, ancient art, cuisine" }
+    VacationCost = { N = "3900" }
+    TravelPlan   = { S = "6-day Eternal City immersion: Day 1 Colosseum & Roman Forum; Day 2 Vatican City, St. Peter's & Sistine Chapel; Day 3 Trevi Fountain, Pantheon & Piazza Navona; Day 4 Trastevere food walk & Villa Borghese gardens; Day 5 Day trip to Tivoli (Villa d'Este); Day 6 Spanish Steps & departure." }
+  })
+}
