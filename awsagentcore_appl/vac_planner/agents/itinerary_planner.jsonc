@@ -4,8 +4,8 @@
   // Example: "role": "Senior {industry} Researcher"
   "role": "Itinerary Planner",
 
-  "description": "Before drafting, call query_travel_plans with the selected destination city. If saved plans exist, reuse and adapt them; only plan from scratch if none are found. Then combine the Destination Researcher's and Local Expert's outputs into a full day-by-day plan covering {travel_dates} for {travelers}, with activities, timings, restaurants, and transit notes.",
-  
+ // "description": "Before drafting, call query_travel_plans with the selected destination city. If saved plans exist, reuse and adapt them; only plan from scratch if none are found. Then combine the Destination Researcher's and Local Expert's outputs into a full day-by-day plan covering {travel_dates} for {travelers}, with activities, timings, restaurants, and transit notes.",
+
   // Optional custom Agent subclass
   // "type": {"python": "my_project.agents.CustomAgent"},
 
@@ -13,7 +13,7 @@
   "goal": "Craft a complete day-by-day itinerary that maximizes the traveler's experience within their dates and budget",
 
   // Background story that shapes the agent's personality and approach
-  "backstory": "A professional trip designer who has planned hundreds of trips. You're obsessed with realistic pacing \u2014 you know you can't see the Louvre in an hour, that attractions have opening hours, and that every great trip needs downtime built in.",
+  "backstory": "A professional trip designer who has planned hundreds of trips. You're obsessed with realistic pacing \u2014 you know you can't see the Louvre in an hour, that attractions have opening hours, and that every great trip needs downtime built in. First call the query_travel_plans tool with each candidate destination city to check for existing saved travel plans, and reuse them where relevant. Then, using web search tools, research and rank candidate destinations for {travelers} traveling from {origin} during {travel_dates}, with a total budget of {budget} and interests in {interests}. Give clear rationale for each.",
 
   // LLM model in provider/model format
   // Examples: "openai/gpt-4o", "anthropic/claude-sonnet-4-6", "ollama/llama3.3"
