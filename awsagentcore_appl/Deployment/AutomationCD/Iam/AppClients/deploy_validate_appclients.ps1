@@ -113,11 +113,15 @@ function Invoke-Http {
     catch {
         $resp = $_.Exception.Response
         if ($resp) {
+            # PS 7 exposes the error body via ErrorDetails; PS 5.1 only via the response stream.
             $text = ""
-            try {
-                $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
-                $text = $reader.ReadToEnd()
-            } catch { }
+            if ($_.ErrorDetails -and $_.ErrorDetails.Message) { $text = $_.ErrorDetails.Message }
+            else {
+                try {
+                    $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
+                    $text = $reader.ReadToEnd()
+                } catch { }
+            }
             return [pscustomobject]@{ Status = [int]$resp.StatusCode; Content = $text }
         }
         return [pscustomobject]@{ Status = 0; Content = $_.Exception.Message }
@@ -330,11 +334,13 @@ else {
             $other = $AgentNames[($i + 1) % $AgentNames.Count]
             $foreign = @($AgentScopes.$other)[0]
             $bad = Get-ClientToken -TokenUrl $tokenUrl -ClientId $ClientIds.$agent -ClientSecret $ClientSecrets.$agent -Scope $foreign
-            if ($bad.Status -eq 400 -and $bad.Json.error -eq "invalid_scope") {
-                Write-Pass "Request for '$foreign' (agent '$other') rejected with invalid_scope."
+            Write-Host "  [DEBUG] Negative test response: HTTP $($bad.Status) $($bad.Raw)" -ForegroundColor DarkGray
+            # Cognito answers invalid_grant when the scope exists but is not allowed for the client, invalid_scope when it is unknown.
+            if ($bad.Status -eq 400 -and $bad.Json.error -in "invalid_scope", "invalid_grant") {
+                Write-Pass "Request for '$foreign' (agent '$other') rejected with $($bad.Json.error)."
             }
             else {
-                Write-Fail "Expected HTTP 400 invalid_scope for '$foreign' but received HTTP $($bad.Status): $($bad.Raw)"
+                Write-Fail "Expected HTTP 400 (invalid_grant/invalid_scope) for '$foreign' but received HTTP $($bad.Status): $($bad.Raw)"
                 $failures++
             }
         }
