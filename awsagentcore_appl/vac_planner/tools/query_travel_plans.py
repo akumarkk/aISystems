@@ -25,6 +25,13 @@ def _token() -> str:
     _tok.update(v=j["access_token"], exp=time.time() + j.get("expires_in", 3600))
     return _tok["v"]
 
+class QueryTravelPlansInput(BaseModel):
+    """Input schema for QueryTravelPlans tool."""
+    TravelCity: str = Field(
+        ...,
+        description="Exact name of the destination city, e.g. 'Paris'."
+    )
+
 class QueryTravelPlans(BaseTool):
     name: str = "query_travel_plans"
     description: str = (
@@ -56,12 +63,12 @@ class QueryTravelPlans(BaseTool):
         return json.dumps(r.json().get("result", r.json()))
 
 
-class QueryTravelPlansInput(BaseModel):
-    """Input schema for QueryTravelPlans tool."""
-    TravelCity: str = Field(
-        ...,
-        description="Exact name of the destination city, e.g. 'Paris'."
-    )
+#class QueryTravelPlansInput(BaseModel):
+#    """Input schema for QueryTravelPlans tool."""
+#    TravelCity: str = Field(
+#        ...,
+#        description="Exact name of the destination city, e.g. 'Paris'."
+#   )
     
 #@tool("query_travel_plans")
 def query_travel_plans(TravelCity: str) -> str:
