@@ -1,2 +1,5 @@
 .\vac_planner\.env
 .venv/
+.terraform/
+.terraform.*
+terraform.*
