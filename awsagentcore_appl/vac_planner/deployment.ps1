@@ -56,6 +56,9 @@ $envvars  = Write-Json "env.json"      @{
   OTEL_SERVICE_NAME = "vac_planner"
   CREWAI_DISABLE_TELEMETRY = "true"
   OTEL_EXPORTER_OTLP_LOGS_HEADERS = "x-aws-log-group=/aws/bedrock-agentcore/runtimes/$RUNTIME_NAME,x-aws-log-stream=default"
+  OIDC_CLIENTSECRET_Local_Expert_City_Guide = $env:OIDC_CLIENTSECRET_Local_Expert_City_Guide
+  OIDC_CLIENTID_Local_Expert_City_Guide     = $env:OIDC_CLIENTID_Local_Expert_City_Guide
+  OIDC_AUTHORITY                       = $env:OIDC_AUTHORITY
 }
 
 $RUNTIME_ID = aws bedrock-agentcore-control list-agent-runtimes --region $REGION `
