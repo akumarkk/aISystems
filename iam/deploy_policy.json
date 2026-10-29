@@ -70,10 +70,21 @@
         "iam:GetRolePolicy",
         "iam:ListRolePolicies",
         "iam:ListAttachedRolePolicies",
+        "iam:ListInstanceProfilesForRole",
+        "iam:UpdateAssumeRolePolicy",
         "iam:PassRole"
       ],
-      "Resource": "arn:aws:iam::837873138218:role/query-travel-plans*"
-      },
+      "Resource": [
+        "arn:aws:iam::837873138218:role/query-travel-plans*",
+        "arn:aws:iam::837873138218:role/vacation-planner-gateway-role"
+      ]
+    },
+    {
+      "Sid": "AgentCoreGatewayFullAccess",
+      "Effect": "Allow",
+      "Action": "bedrock-agentcore:*",
+      "Resource": "*"
+    },
     {
       "Sid": "LambdaLayersAndPassRole",
       "Effect": "Allow",
