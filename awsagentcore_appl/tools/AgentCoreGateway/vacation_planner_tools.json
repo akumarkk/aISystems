@@ -1,0 +1,33 @@
+[
+  {
+    "name": "query_travel_plans",
+    "description": "Looks up saved vacation travel plans in the TravelPlans DynamoDB table for a given destination city. Returns the city, the number of matching plans, and the list of plans. Use this to find existing itineraries before creating a new one.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "TravelCity": {
+          "type": "string",
+          "description": "Destination city to look up travel plans for, for example 'Paris'. Matching is by exact city name."
+        }
+      },
+      "required": ["TravelCity"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "statusCode": {
+          "type": "integer",
+          "description": "HTTP-style status code: 200 on success, 400 if TravelCity is missing, 500 on a DynamoDB error."
+        },
+        "headers": {
+          "type": "object"
+        },
+        "body": {
+          "type": "string",
+          "description": "JSON string with the keys travelCity (string), count (integer) and plans (array of travel plan items). On error it contains an 'error' message instead."
+        }
+      },
+      "required": ["statusCode", "body"]
+    }
+  }
+]
